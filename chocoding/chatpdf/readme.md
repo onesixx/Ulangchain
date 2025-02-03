@@ -10,3 +10,7 @@ https://docs.trychroma.com/docs/overview/getting-started
 
 https://python.langchain.com/api_reference/langchain/retrievers/langchain.retrievers.multi_query.MultiQueryRetriever.html#langchain.retrievers.multi_query.MultiQueryRetriever
 
+# streamlit
+https://docs.streamlit.io/develop/api-reference/widgets/st.file_uploader
+
+https://github.com/langchain-ai/streamlit-agent/blob/main/streamlit_agent/chat_with_documents.py

@@ -1,0 +1,130 @@
+{
+    "models": [
+      {
+        "apiBase": "http://203.235.199.198:13434/",
+        "model": "deepseek-coder-v2",
+        "provider": "ollama",
+        "title": "deepseek-coder-v2"
+      },
+      {
+        "apiBase": "http://127.0.0.1:11434",
+        "model": "llama3.3",
+        "provider": "ollama",
+        "title": "llama3.3 Local"
+      },
+      {
+        "apiBase": "http://203.235.199.198:13434/",
+        "model": "qwen2.5-coder:32b",
+        "provider": "ollama",
+        "title": "qwen2.5-coder 32b"
+      },
+      {
+        "apiBase": "http://203.235.199.198:13434/",
+        "model": "aya-expanse:32b",
+        "provider": "ollama",
+        "title": "aya-expanse 32b"
+      },
+      {
+        "apiBase": "http://203.235.199.198:13434/",
+        "model": "codestral:22b",
+        "provider": "ollama",
+        "title": "codestral 22b"
+      },
+      {
+        "apiBase": "http://203.235.199.198:13434/",
+        "model": "codellama:70b",
+        "provider": "ollama",
+        "title": "CodeLlama 70b"
+      },
+      {
+        "apiBase": "http://203.235.199.198:13434/",
+        "model": "gemma2:27b",
+        "provider": "ollama",
+        "title": "gemma2 27b"
+      },
+      {
+        "apiBase": "http://203.235.199.198:13434/",
+        "model": "deepseek-r1:32b",
+        "provider": "ollama",
+        "title": "deepseek-r1 32b"
+      },
+      {
+        "apiBase": "http://203.235.199.198:13434/",
+        "model": "llama3.3",
+        "provider": "ollama",
+        "title": "llama3.3"
+      }
+    ],
+    "tabAutocompleteModel": {
+      "apiBase": "http://203.235.199.198:13434/",
+      "model": "deepseek-coder-v2",
+      "provider": "ollama",
+      "title": "deepseek-coder-v2"
+    },
+    "contextProviders": [
+      {
+        "name": "code",
+        "params": {}
+      },
+      {
+        "name": "docs",
+        "params": {}
+      },
+      {
+        "name": "diff",
+        "params": {}
+      },
+      {
+        "name": "terminal",
+        "params": {}
+      },
+      {
+        "name": "problems",
+        "params": {}
+      },
+      {
+        "name": "folder"
+      },
+      {
+        "name": "codebase",
+        "params": {
+          "nRetrieve": 50,
+          "nFinal": 10,
+          "useReranking": true
+        }
+      },
+      {
+        "name": "tree"
+      },
+      {
+        "name": "url"
+      }
+    ],
+    "slashCommands": [
+      {
+        "name": "edit",
+        "description": "Edit selected code"
+      },
+      {
+        "name": "comment",
+        "description": "Write comments for the selected code"
+      },
+      {
+        "name": "share",
+        "description": "Export the current chat session to markdown"
+      },
+      {
+        "name": "cmd",
+        "description": "Generate a shell command"
+      },
+      {
+        "name": "commit",
+        "description": "Generate a git commit message"
+      }
+    ],
+    "embeddingsProvider": {
+      "provider": "ollama",
+      "model": "nomic-embed-text"
+    },
+    "allowAnonymousTelemetry": false
+  }

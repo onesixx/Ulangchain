@@ -1,4 +1,12 @@
-#from langchain.document_loaders import PyPDFLoader
+# import torch
+# if torch.cuda.is_available():
+#     device = torch.device("cuda")  # Use GPU for computation
+# else:
+#     device = torch.device("cpu")  # Fallback to CPU
+# print(f"device: {device}")
+
+
+# from langchain.document_loaders import PyPDFLoader
 from langchain_community.document_loaders import PyPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_ollama import OllamaEmbeddings
@@ -6,82 +14,68 @@ from langchain_ollama import OllamaEmbeddings
 from langchain_community.vectorstores import Chroma
 from langchain_ollama import ChatOllama
 from langchain.retrievers import MultiQueryRetriever
-
 from langchain.chains import RetrievalQA
 
+import os
+import streamlit as st
+import tempfile
 
-pdf_path = "/workspace/git/Ulangchain/chocoding/chatpdf/aLuckyDay.pdf"
-###### LOAD -------------------------------------------------------------------
-# loader = PyPDFLoader("./aLuckyDay.pdf")
-try:
-    loader = PyPDFLoader(pdf_path)
-except ValueError as e:
-    print(f"PDF 파일 경로 오류: {e}")
-    raise
+V_STORE_PATH = "./v_store"
 
-###### SPLIT ------------------------------------------------------------------
-# splitter 초기화
-text_splitter = RecursiveCharacterTextSplitter(
-    chunk_size=300,
-    chunk_overlap=20,
-    length_function=len,
-    is_separator_regex=False,
-)
-# 페이지 단위로 분할
-pages = loader.load_and_split()
+def pdf_to_document(uploaded_file):
+    temp_dir = tempfile.TemporaryDirectory()
+    temp_filepath = os.path.join(temp_dir.name, uploaded_file.name)
+    with open(temp_filepath, "wb") as f:
+        f.write(uploaded_file.getvalue())
+    # Load
+    loader = PyPDFLoader(temp_filepath)
+    pages = loader.load_and_split()
+    return pages
 
-texts = text_splitter.split_documents(pages)
-# print(texts[0])
+st.title("ChatPDF with Ollama")
+st.write("---")
+st.write("Upload a PDF file to start chatting with it!")
 
-###### TOKENIZE  --------------------------------------------------------------
-### (EMBEDDINGS)
-# embedding_model = OllamaEmbeddings(
-#     model = "llama3.3:latest",
-# )
-# tictoken..
-embedding_model = OllamaEmbeddings(
-    model="smollm2:135m",
-    api_base="http://203.235.199.198:13434/"
-)
-### STORE (Vector Database)  --------------------------------------------------------
-db = Chroma.from_documents(texts, embedding_model)
+# File uploader
+uploaded_file = st.file_uploader("Choose a PDF file", type="pdf")
+if uploaded_file is not None:
+    # Save the uploaded file to disk
+     ###### LOAD -------------------------------------------------------------------
+    pages = pdf_to_document(uploaded_file)
 
-###### Retreve (QUERY) ------------------------------------------------------------------
-question = "아내가 먹고 싶어하는 음식은 무엇인가요?"
 
-llm = ChatOllama(
-    apiBase="http://203.235.199.198:13434/",  # Replace with your Ollama API base URL if different
-    model = "llama3.3",
-    temperature = 0,
-    num_predict = 256,
-    #disable_streaming=False,
-    # other params ...
-)
+    ###### SPLIT ------------------------------------------------------------------
+    text_splitter = RecursiveCharacterTextSplitter(
+        chunk_size=300,
+        chunk_overlap=20,
+        length_function=len,
+        is_separator_regex=False,
+    )
+    texts = text_splitter.split_documents(pages)
+    ###### TOKENIZE  --------------------------------------------------------------
+    embedding_model = OllamaEmbeddings(
+        model="llama3.3:latest",
+        base_url="http://172.17.0.2:11434",
+    )
+    ### STORE (Vector Store)  --------------------------------------------------------
+    db = Chroma.from_documents(texts, embedding_model, persist_directory=V_STORE_PATH)
+    st.write("File uploaded and store chroma successfully!")
 
-# RetrievalQA 체인 초기화
-retrieval_qa_chain = RetrievalQA.from_chain_type(
-    llm=llm,
-    retriever=db.as_retriever(),
-    chain_type="stuff"
-)
+    ###### Retreve (QUERY) ------------------------------------------------------------------
+    st.header("Ask your PDF")
+    question = st.text_input("Enter your question here")
 
-retriever_from_llm = MultiQueryRetriever(
-    llm_chain=retrieval_qa_chain,
-    retriever=db.as_retriever(),
-    #db = db,
-    chain_type="stuff"
-)
-
-retriever_from_llm = MultiQueryRetriever(
-    llm_chain=retrieval_qa_chain,
-    retriever=db.as_retriever(),
-    #db = db,
-)
-
-docs = retriever_from_llm.get_relevant_documents(query=question)
-print(docs)
-print(len(docs))
-
-result = retriever_from_llm.retrieve(question)
-print(f'Q: {question}')
-print(f'A: {result}')
+    if st.button('Ask'):
+        with st.spinner("Thinking..."):
+            qa_chain = RetrievalQA.from_chain_type(
+                retriever = db.as_retriever(),
+                llm = ChatOllama(
+                        apiBase="http://172.17.0.2:11434",
+                        model = "llama3.3:latest",
+                        temperature = 0,
+                        num_predict = 256,
+                    )
+            )
+            # 질문에 대한 답변 출력하기
+            answer = qa_chain.invoke({"query": question})
+            st.write(answer['result'])
