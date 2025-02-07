@@ -1,22 +1,30 @@
-// For format details, see https://aka.ms/devcontainer.json. For config options, see the
-// README at: https://github.com/devcontainers/templates/tree/main/src/anaconda
 {
   "name": "SixxDevCon Ulangchain",
 	"build": {
-		"context": "..",
-		"dockerfile": "Dockerfile"
+		"dockerfile": "Dockerfile",
+    "args": {
+      "DEBIAN_FRONTEND": "noninteractive",
+      "USERNAME": "oschung_skcc",
+      "USER_UID": "1002",
+      "USER_GID": "2101"
+    }
 	},
   "runArgs": [
     "--gpus=all",
     "--ipc=host",
     "--ulimit=memlock=-1",
     "--ulimit=stack=67108864",
-    "--name=SixxDevCon_Ulangchain"
+    "--name=Sixx_Ulangchain"
   ],
   "mounts": [
     {
       "source": "/raid/templates/sixxdisk/git/Ulangchain",
       "target": "/workspaces",
+      "type": "bind"
+    },
+    {
+      "source": "/raid/templates/sixxdisk/ssh",
+      "target": "/home/oschung_skcc/.ssh",
       "type": "bind"
     },
     {
@@ -28,52 +36,22 @@
       "source" : "/raid/templates/sixxdisk/lib",
       "target" : "/usr/local/lib",
       "type" : "bind"
-    },
-    // {
-    //   "source" : "/raid/templates/sixxdisk/opt_conda",
-    //   "target" : "/opt/conda",
-    //   "type" : "bind"
-    // },
-    {
-      "source" : "/raid/templates/sixxdisk/local",
-      "target" : "/home/oschung_skcc/.local",
-      "type" : "bind"
     }
   ],
   "workspaceFolder": "/workspaces",
+  "remoteUser": "oschung_skcc",
+
   "customizations": {
     "vscode": {
       "extensions": [
         "ms-python.python",
         "ms-toolsai.jupyter"
-      ]
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/home/oschung_skcc/venv/bin/python"
+      }
     }
   },
-  "remoteUser": "oschung_skcc",
-  "containerEnv": {
-    "PYTHONPATH": "/usr/local/lib:${PYTHONPATH}"
-  },
-  "remoteEnv": {
-    "PATH": "/opt/conda/bin:${containerEnv:PATH}:/home/oschung_skcc/.local/bin",
-    "PYTHONPATH": "/usr/local/lib:${PYTHONPATH}"
-  },
-	// Features to add to the dev container. More info: https://containers.dev/features.
-	// "features": {},
 
-	// Use 'forwardPorts' to make a list of ports inside the container available locally.
-	// "forwardPorts": [],
-
-	// Use 'postCreateCommand' to run commands after the container is created.
-	// "postCreateCommand": "python --version",
-
-	// Configure tool-specific properties.
-	// "customizations": {},
-
-	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
-	// "remoteUser": "root"
-  "postCreateCommand": [
-    "bash -c 'source /opt/conda/bin/activate base && /opt/conda/bin/python -m pip install -r /workspaces/requirements.txt --user'",
-    "chmod 600 ~/.ssh/id_rsa",
-    "ssh-keyscan github.com >> ~/.ssh/known_hosts"
-  ]
+  "postCreateCommand":"sh -c 'pip install -r /workspaces/Ulangchain/requirements.txt; git config --global user.email /'onesixx@nate.com/'; git config --global user.name /'onesixx/''"
 }
