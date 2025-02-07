@@ -16,12 +16,13 @@
     "--ulimit=stack=67108864",
     "--name=Sixx_Ulangchain"
   ],
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces,type=bind",
   "mounts": [
-    {
-      "source": "/raid/templates/sixxdisk/git/Ulangchain",
-      "target": "/workspaces",
-      "type": "bind"
-    },
+    // {
+    //   "source": "/raid/templates/sixxdisk/git/Ulangchain",
+    //   "target": "/workspaces",
+    //   "type": "bind"
+    // },
     {
       "source": "/raid/templates/sixxdisk/ssh",
       "target": "/home/oschung_skcc/.ssh",
@@ -31,12 +32,12 @@
       "source" : "/raid/templates/sixxdisk/cache",
       "target" : "/home/oschung_skcc/.cache",
       "type" : "bind"
-    },
-    {
-      "source" : "/raid/templates/sixxdisk/lib",
-      "target" : "/home/oschung_skcc/venv/lib",
-      "type" : "bind"
     }
+    // {
+    //   "source" : "/raid/templates/sixxdisk/lib",
+    //   "target" : "/home/oschung_skcc/venv/lib",
+    //   "type" : "bind"
+    // }
   ],
   "workspaceFolder": "/workspaces",
   "remoteUser": "oschung_skcc",
@@ -52,6 +53,6 @@
       }
     }
   },
-
-  "postCreateCommand":"sh -c 'pip install -r /workspaces/Ulangchain/requirements.txt; git config --global user.email /'onesixx@nate.com/'; git config --global user.name /'onesixx/''"
+  "postCreateCommand":"sh -c 'git config --global user.email /'onesixx@nate.com/'; git config --global user.name /'onesixx/''",
+  "postStartCommand": "sh -c 'pip install -r /workspaces/requirements.txt;'"
 }
