@@ -34,7 +34,7 @@
     },
     {
       "source" : "/raid/templates/sixxdisk/lib",
-      "target" : "/usr/local/lib",
+      "target" : "/home/oschung_skcc/venv/lib",
       "type" : "bind"
     }
   ],
