@@ -18,11 +18,6 @@
   ],
   "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces,type=bind",
   "mounts": [
-    // {
-    //   "source": "/raid/templates/sixxdisk/git/Ulangchain",
-    //   "target": "/workspaces",
-    //   "type": "bind"
-    // },
     {
       "source": "/raid/templates/sixxdisk/ssh",
       "target": "/home/oschung_skcc/.ssh",
