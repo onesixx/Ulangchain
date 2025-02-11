@@ -1,8 +1,14 @@
+torch
+langchain_teddynote
+"protobuf>=5.0,<6.0"
+pymupdf
 langchain
 langchain_community
+langchain_openai
 langchain_ollama
 pypdf
 chromadb
 tiktoken
 httpx==0.27.0
 streamlit
+faiss-gpu-cu12

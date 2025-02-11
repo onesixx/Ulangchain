@@ -4,8 +4,6 @@
 # else:
 #     device = torch.device("cpu")  # Fallback to CPU
 # print(f"device: {device}")
-
-
 # from langchain.document_loaders import PyPDFLoader
 from langchain_community.document_loaders import PyPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
@@ -70,7 +68,7 @@ if uploaded_file is not None:
             qa_chain = RetrievalQA.from_chain_type(
                 retriever = db.as_retriever(),
                 llm = ChatOllama(
-                        apiBase="http://172.17.0.2:11434",
+                        base_url="http://172.17.0.2:11434",
                         model = "llama3.3:latest",
                         temperature = 0,
                         num_predict = 256,
@@ -78,4 +76,7 @@ if uploaded_file is not None:
             )
             # 질문에 대한 답변 출력하기
             answer = qa_chain.invoke({"query": question})
+            print(answer)
             st.write(answer['result'])
+
+
