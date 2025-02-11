@@ -3,7 +3,7 @@ FROM nvcr.io/nvidia/pytorch:24.12-py3
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-    sudo wget bzip2 bash-completion curl vim nano net-tools htop && \
+    sudo bash-completion net-tools htop && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 # 사용자 추가 및 권한 설정
