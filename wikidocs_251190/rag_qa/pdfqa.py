@@ -29,12 +29,7 @@ import os
 import streamlit as st
 import tempfile
 
-from langchain_community.llms import Ollama
-llm = Ollama(model="your_model", base_url="http://localhost:11434")
-
 V_STORE_PATH = "./v_store"
-
-
 
 # def pdf_to_document(uploaded_file):
 #     temp_dir = tempfile.TemporaryDirectory()
@@ -86,7 +81,8 @@ if uploaded_file is not None:
 
     # st.write("File uploaded and store chroma successfully!")
 
-
+    ###### 5. 검색기 생성 Retrever (QUERY) ------------------------------------------------------------------
+    retriever = vectorstore.as_retriever()
 
     ###### 6 프롬프트 생성(Create Prompt) ------------------------------------------------------------------
     prompt = PromptTemplate.from_template(
@@ -119,8 +115,7 @@ if uploaded_file is not None:
     #         # 질문에 대한 답변 출력하기
     #         answer = qa_chain.invoke({"query": question})
     #         st.write(answer['result'])
-    ###### 5. 검색기 생성 Retrever (QUERY) ------------------------------------------------------------------
-    retriever = vectorstore.as_retriever()
+
 
     # 단계 7: 언어모델(LLM) 생성
     # llm = ChatOpenAI(model_name="gpt-4o", temperature=0)
@@ -150,19 +145,17 @@ if uploaded_file is not None:
 
 
 # ---------------------------------------------------------------------------------------------------------------------
-import os
-os.environ["OLLAMA_BASE_URL"] = "http://172.17.0.2:11434"
+# import logging
+# from langchain.chains import RetrievalQA
+# import httpx
+# logging.basicConfig(level=logging.DEBUG)
 
-import logging
-from langchain.chains import RetrievalQA
-import httpx
+# # httpx의 요청을 로깅
+# client = httpx.Client(
+#   event_hooks={
+#       "request": [lambda request: print(f"LangChain Request: {request.url}")],
+#       "response": [lambda response: print(f"LangChain Response: {response.status_code}")]})
 
-logging.basicConfig(level=logging.DEBUG)
-
-# httpx의 요청을 로깅
-client = httpx.Client(event_hooks={"request": [lambda request: print(f"LangChain Request: {request.url}")],
-                                   "response": [lambda response: print(f"LangChain Response: {response.status_code}")]})
-
-# LangChain 실행
-response = chain.invoke({"query": question})
-print(response)
+# # LangChain 실행
+# response = chain.invoke({"query": question})
+# print(response)
