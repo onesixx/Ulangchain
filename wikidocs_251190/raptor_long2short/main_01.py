@@ -18,6 +18,31 @@ from langchain.callbacks.base import BaseCallbackHandler
 from langchain_ollama import ChatOllama
 
 # # LCEL 문서 로드
+# url = "https://python.langchain.com/docs/expression_language/"
+# loader = RecursiveUrlLoader(
+#     url=url, max_depth=20, extractor=lambda x: Soup(x, "html.parser").text
+# )
+# docs = loader.load()
+
+# # PydanticOutputParser를 사용한 LCEL 문서 로드 (기본 LCEL 문서 외부)
+# url = "https://python.langchain.com/docs/how_to/output_parser_structured/"
+# loader = RecursiveUrlLoader(
+#     url=url, max_depth=1, extractor=lambda x: Soup(x, "html.parser").text
+# )
+# docs_pydantic = loader.load()
+
+# # Self Query를 사용한 LCEL 문서 로드 (기본 LCEL 문서 외부)
+# url = "https://python.langchain.com/docs/how_to/self_query/"
+# loader = RecursiveUrlLoader(
+#     url=url, max_depth=1, extractor=lambda x: Soup(x, "html.parser").text
+# )
+# docs_sq = loader.load()
+
+
+# # 문서 텍스트
+# docs.extend([*docs_pydantic, *docs_sq])
+# docs_texts = [d.page_content for d in docs]
+
 # 1 - Load the document --------------------------------------------------------
 urls = [
     ("https://python.langchain.com/docs/expression_language/", "LCEL"),

@@ -1,3 +1,6 @@
+from rosie.log import setup_logging
+from rosie.log import logger
+logger.info("Here we go!!!")
 # LangSmith 추적을 설정합니다. https://smith.langchain.com
 # Chain 이나 Agent 내부에서 정확히 무슨 일이 일어나고 있는지 조사
 from dotenv import load_dotenv
@@ -6,9 +9,7 @@ from langchain_teddynote import logging
 from langchain_teddynote.messages import stream_response
 logging.langsmith("CH12-RAG")
 
-from rosie.log import setup_logging
-from rosie.log import logger
-logger.info("Here we go!!!")
+
 
 import bs4
 from langchain_community.document_loaders import WebBaseLoader
@@ -67,13 +68,24 @@ prompt = PromptTemplate.from_template(
 #Answer:"""
 )
 # 2. Chain ---------------------------------------------------
-rag_chain = RetrievalQA.from_chain_type(
-    retriever=retriever,
-    chain_type="stuff",
-    chain_type_kwargs={"prompt": prompt},
-    return_source_documents=True,
-    llm = ChatOllama(model=MODEL, base_url=BASE_URL, temperature=0)
+from langchain_core.runnables import RunnablePassthrough
+from langchain_core.output_parsers import StrOutputParser
+
+llm = ChatOllama(model=MODEL, base_url=BASE_URL, temperature=0)
+rag_chain = (
+    {"context": retriever, "question": RunnablePassthrough()}
+    | prompt
+    | llm
+    | StrOutputParser()
 )
+
+# rag_chain = RetrievalQA.from_chain_type(
+#     retriever=retriever,
+#     chain_type="stuff",
+#     chain_type_kwargs={"prompt": prompt},
+#     return_source_documents=True,
+#     llm = ChatOllama(model=MODEL, base_url=BASE_URL, temperature=0)
+# )
 
 # 3. Query ---------------------------------------------------
 question = "부영그룹의 출산 장려 정책에 대해 설명해주세요."
@@ -81,5 +93,5 @@ question = "부영그룹의 출산 장려 정책에 대해 설명해주세요."
 answer = rag_chain.stream(question)
 stream_response(answer)
 
-answer = rag_chain.invoke({"query": question})
-print(answer['result'])
+answer = rag_chain.invoke(question)
+print(answer)
