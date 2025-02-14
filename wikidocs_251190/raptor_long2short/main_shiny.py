@@ -20,24 +20,33 @@ from langchain_ollama import ChatOllama
 # # LCEL 문서 로드
 # 1 - Load the document --------------------------------------------------------
 urls = [
-    ("https://python.langchain.com/docs/expression_language/", "LCEL"),
-    ("https://python.langchain.com/docs/how_to/output_parser_structured/", "PydanticOutputParser"),
-    ("https://python.langchain.com/docs/how_to/self_query/", "SelfQuery")
+    ("https://shiny.posit.co/py/docs/overview.html", "overview"),
+    ("https://shiny.posit.co/py/api/core/", "api_core"),
+    ("https://shiny.posit.co/py/components/", "components"),
+    ("https://shiny.posit.co/py/gallery/", "gallery"),
 ]
-
-
 docs = []
 for url_info in urls:
     url, description = url_info
+    logger.info(f"Loading {description} from {url}")
     loader = RecursiveUrlLoader(
         url=url,
-        max_depth=20 if description == "LCEL" else 1,
+        max_depth=6, #20 if description == "LCEL" else 1,
         extractor=lambda x: Soup(x, "html.parser").text
     )
     loaded_docs = loader.load()
     docs.extend(loaded_docs)
 docs_texts = [d.page_content for d in docs]
 
+def find_page_not_found_indices(lst):
+    indices = []
+    for index, element in enumerate(lst):
+        if "Page not found" in element:
+            indices.append(index)
+    return indices
+exclude_indices =find_page_not_found_indices(docs_texts)
+docs = [element for index, element in enumerate(docs) if index not in exclude_indices]
+docs_texts = [d.page_content for d in docs]
 
 ##### 2. 각 문서에 대한 토큰 수 계산
 def num_tokens_from_string(string: str, encoding_name: str) -> int:
@@ -138,9 +147,9 @@ for level in sorted(results.keys()):
 # 이제 all_texts를 사용하여 FAISS vectorstore를 구축합니다.
 vectorstore = FAISS.from_texts(texts=all_texts, embedding=embd)
 
-# DB 를 로컬에 저장합니다.
 
-DB_INDEX = "RAPTOR"
+# DB 를 로컬에 저장합니다.
+DB_INDEX = "v_store"
 
 # 로컬에 FAISS DB 인덱스가 이미 존재하는지 확인하고, 그렇다면 로드하여 vectorstore와 병합한 후 저장합니다.
 if os.path.exists(DB_INDEX):
@@ -174,6 +183,6 @@ rag_chain = (
 # 추상적인 질문 실행
 _ = rag_chain.invoke("전체 문서의 핵심 주제에 대해 설명해주세요.")
 # Low Level 질문 실행
-_ = rag_chain.invoke("PydanticOutputParser 을 활용한 예시 코드를 작성해 주세요.")
+_ = rag_chain.invoke("Restaurant tips dashboard을 활용한 예시 코드를 작성해 주세요.")
 # Low Level 질문 실행
-_ = rag_chain.invoke("self-querying 방법과 예시 코드를 작성해 주세요.")
+_ = rag_chain.invoke("reactive 방법과 예시 코드를 작성해 주세요.")

@@ -14,5 +14,5 @@ streamlit
 faiss-gpu-cu12
 matplotlib
 langchain_anthropic
-umap
+umap-learn
 scikit-learn

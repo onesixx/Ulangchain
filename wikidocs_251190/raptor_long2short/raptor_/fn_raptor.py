@@ -15,7 +15,7 @@ logger.info("fn_raptor.py!!!")
 from typing import Optional, List, Tuple, Dict
 import numpy as np
 import pandas as pd
-import umap
+import umap.umap_ as umap
 from sklearn.mixture import GaussianMixture
 from langchain_core.output_parsers import StrOutputParser
 from langchain.prompts import ChatPromptTemplate
@@ -61,6 +61,7 @@ def local_cluster_embeddings(
     num_neighbors: int = 10,
     metric: str = "cosine"
 ) -> np.ndarray:
+    logger.info(f"umap: {embeddings}, {dim}")
     """
     임베딩에 대해 지역 차원 축소를 수행합니다. 이는 일반적으로 전역 클러스터링 이후에 사용됩니다.
     """
@@ -268,9 +269,10 @@ def embed_cluster_summarize_texts(
     print(f"--Generated {len(all_clusters)} clusters--")
 
     # 요약
-    template = """여기 LangChain 표현 언어 문서의 하위 집합이 있습니다.
-    LangChain 표현 언어는 LangChain에서 체인을 구성하는 방법을 제공합니다.
-    제공된 문서의 자세한 요약을 제공하십시오.
+    # template = """여기 LangChain 표현 언어 문서의 하위 집합이 있습니다.
+    # LangChain 표현 언어는 LangChain에서 체인을 구성하는 방법을 제공합니다.
+    # 제공된 문서의 자세한 요약을 제공하십시오.
+    template ="""
     문서:
     {context}
     """
