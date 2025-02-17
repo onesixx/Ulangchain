@@ -11,7 +11,7 @@ logger.info("fn_raptor.py!!!")
 # RAPTOR 장점
 # 문서의 전체적인 맥락을 이해하고 다양한 수준의 정보를 통합하여 더 정확하고 포괄적인 답변을 제공할 수 있다
 # 이는 기존의 검색 강화 언어 모델이 짧은 연속적인 텍스트 조각만을 검색하는 한계를 극복한 것입니다
-
+import pickle
 from typing import Optional, List, Tuple, Dict
 import numpy as np
 import pandas as pd
@@ -19,8 +19,7 @@ import umap.umap_ as umap
 from sklearn.mixture import GaussianMixture
 from langchain_core.output_parsers import StrOutputParser
 from langchain.prompts import ChatPromptTemplate
-
-from langchain.embeddings import OllamaEmbeddings
+from langchain_community.embeddings import OllamaEmbeddings
 MODEL="llama3.3:latest"
 BASE_URL="http://172.17.0.2:11434"
 embd = OllamaEmbeddings(
@@ -61,7 +60,6 @@ def local_cluster_embeddings(
     num_neighbors: int = 10,
     metric: str = "cosine"
 ) -> np.ndarray:
-    logger.info(f"umap: {embeddings}, {dim}")
     """
     임베딩에 대해 지역 차원 축소를 수행합니다. 이는 일반적으로 전역 클러스터링 이후에 사용됩니다.
     """
@@ -192,11 +190,23 @@ def embed(texts):
     # - texts: List[str], 임베딩할 텍스트 문서의 목록입니다.
     # returns:
     # - numpy.ndarray: 주어진 텍스트 문서들에 대한 임베딩 배열입니다.
-    text_embeddings = embd.embed_documents(
-        texts
-    )  # 텍스트 문서들의 임베딩을 생성합니다.
+    logger.info("Embedding texts...===> start")
+    # text_embeddings = embd.embed_documents(texts) # 텍스트 문서들의 임베딩을 생성합니다.
+
+    path = "/workspaces/wikidocs_251190/raptor_long2short/temp/text_embeddings.pkl"
+    # with open(path, 'wb') as file:
+    #     pickle.dump(text_embeddings, file)
+    with open(path, 'rb') as file:
+        text_embeddings = pickle.load(file)
+
+    logger.info("Embedding texts...<=== end")
+
+
     text_embeddings_np = np.array(text_embeddings)  # 임베딩을 numpy 배열로 변환합니다.
     return text_embeddings_np  # 임베딩된 numpy 배열을 반환합니다.
+
+
+
 
 def embed_cluster_texts(texts):
     """
@@ -209,7 +219,7 @@ def embed_cluster_texts(texts):
     """
     text_embeddings_np = embed(texts)  # 임베딩 생성
     cluster_labels = perform_clustering(
-        text_embeddings_np, 10, 0.1
+        text_embeddings_np, 10, 0.1, #force_all_finite=True
     )  # 임베딩에 대해 클러스터링 수행
     df = pd.DataFrame()  # 결과를 저장할 DataFrame 초기화
     df["text"] = texts  # 원본 텍스트 저장
@@ -246,7 +256,6 @@ def embed_cluster_summarize_texts(
       1. 첫 번째 데이터프레임(`df_clusters`)은 원본 텍스트, 그들의 임베딩, 그리고 클러스터 할당을 포함합니다.
       2. 두 번째 데이터프레임(`df_summary`)은 각 클러스터에 대한 요약, 지정된 세부 수준, 그리고 클러스터 식별자를 포함합니다.
     """
-
     # 텍스트를 임베딩하고 클러스터링하여 'text', 'embd', 'cluster' 열이 있는 데이터프레임을 생성합니다.
     df_clusters = embed_cluster_texts(texts)
 
@@ -266,7 +275,7 @@ def embed_cluster_summarize_texts(
     # 처리를 위해 고유한 클러스터 식별자를 검색합니다.
     all_clusters = expanded_df["cluster"].unique()
 
-    print(f"--Generated {len(all_clusters)} clusters--")
+    # print(f"--Generated {len(all_clusters)} clusters--")
 
     # 요약
     # template = """여기 LangChain 표현 언어 문서의 하위 집합이 있습니다.
@@ -284,8 +293,8 @@ def embed_cluster_summarize_texts(
     for i in all_clusters:
         df_cluster = expanded_df[expanded_df["cluster"] == i]
         formatted_txt = fmt_txt(df_cluster)
-        summaries.append(chain.invoke({"context": formatted_txt}))
-
+        summary = chain.invoke({"context": formatted_txt})
+        summaries.append(summary)
     # 요약, 해당 클러스터 및 레벨을 저장할 데이터프레임을 생성합니다.
     df_summary = pd.DataFrame(
         {
@@ -301,10 +310,11 @@ def recursive_embed_cluster_summarize(
     texts: List[str], level: int = 1, n_levels: int = 3, model=None
 ) -> Dict[int, Tuple[pd.DataFrame, pd.DataFrame]]:
     """
-    지정된 레벨까지 또는 고유 클러스터의 수가 1이 될 때까지 텍스트를 재귀적으로 임베딩, 클러스터링, 요약하여
+    지정된 레벨까지 (또는 고유 클러스터의 수가 1이 될 때까지) 텍스트를
+    재귀적으로 embedding, clustering, summarizing을 수행하여
     각 레벨에서의 결과를 저장합니다.
     args:
-    - texts: List[str], 처리할 텍스트들.
+    - texts: List[str], 처리할 텍스트들. leaf_text
     - level: int, 현재 재귀 레벨 (1에서 시작).
     - n_levels: int, 재귀의 최대 깊이.
     returns:

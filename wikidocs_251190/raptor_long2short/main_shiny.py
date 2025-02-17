@@ -1,6 +1,6 @@
 from rosie.log import setup_logging
 from rosie.log import logger
-logger.info("Here we go!!!")
+logger.info("main.py start!!!")
 # RAPTOR: Recursive Abstractive Processing for Tree-Organized Retrieval
 # LLM의 정보검색능력을 향상시키기 위한 방식
 import os
@@ -11,75 +11,100 @@ import matplotlib.pyplot as plt
 
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain.storage import LocalFileStore
-from langchain.embeddings import OllamaEmbeddings
+from langchain_community.embeddings import OllamaEmbeddings
 from langchain.embeddings import CacheBackedEmbeddings
 
 from langchain.callbacks.base import BaseCallbackHandler
 from langchain_ollama import ChatOllama
 
+import pickle
+
 # # LCEL 문서 로드
 # 1 - Load the document --------------------------------------------------------
-urls = [
-    ("https://shiny.posit.co/py/docs/overview.html", "overview"),
-    ("https://shiny.posit.co/py/api/core/", "api_core"),
-    ("https://shiny.posit.co/py/components/", "components"),
-    ("https://shiny.posit.co/py/gallery/", "gallery"),
-]
-docs = []
-for url_info in urls:
-    url, description = url_info
-    logger.info(f"Loading {description} from {url}")
-    loader = RecursiveUrlLoader(
-        url=url,
-        max_depth=6, #20 if description == "LCEL" else 1,
-        extractor=lambda x: Soup(x, "html.parser").text
-    )
-    loaded_docs = loader.load()
-    docs.extend(loaded_docs)
+# urls = [
+#     ("https://shiny.posit.co/py/docs/overview.html", "overview"),
+#     ("https://shiny.posit.co/py/api/core/", "api_core"),
+#     ("https://shiny.posit.co/py/components/", "components"),
+#     ("https://shiny.posit.co/py/gallery/", "gallery"),
+# ]
+# docs = []
+# for url_info in urls:
+#     url, description = url_info
+#     logger.info(f"Loading {description} from {url}")
+#     loader = RecursiveUrlLoader(
+#         url=url,
+#         max_depth=6, #20 if description == "LCEL" else 1,
+#         extractor=lambda x: Soup(x, "html.parser").text
+#     )
+#     loaded_docs = loader.load()
+#     docs.extend(loaded_docs)
+# docs_texts = [d.page_content for d in docs]
+# def find_page_not_found_indices(lst):
+#     indices = []
+#     for index, element in enumerate(lst):
+#         if "Page not found" in element:
+#             indices.append(index)
+#     return indices
+# exclude_indices =find_page_not_found_indices(docs_texts)
+# docs = [element for index, element in enumerate(docs) if index not in exclude_indices]
+
+
+# with open('temp/docs.pkl', 'wb') as file:
+#     pickle.dump(docs, file)
+
+# ------------------------------------------------------
+path = "/workspaces/wikidocs_251190/raptor_long2short/temp/docs.pkl"
+with open(path, 'rb') as file:
+    docs = pickle.load(file)
 docs_texts = [d.page_content for d in docs]
 
-def find_page_not_found_indices(lst):
-    indices = []
-    for index, element in enumerate(lst):
-        if "Page not found" in element:
-            indices.append(index)
-    return indices
-exclude_indices =find_page_not_found_indices(docs_texts)
-docs = [element for index, element in enumerate(docs) if index not in exclude_indices]
-docs_texts = [d.page_content for d in docs]
 
 ##### 2. 각 문서에 대한 토큰 수 계산
-def num_tokens_from_string(string: str, encoding_name: str) -> int:
-    # 주어진 문자열에서 토큰의 개수를 반환합니다.
-    encoding = tiktoken.get_encoding(encoding_name)
-    num_tokens = len(encoding.encode(string))
-    return num_tokens
+# def num_tokens_from_string(string: str, encoding_name: str) -> int:
+#     # 주어진 문자열에서 토큰의 개수를 반환합니다.
+#     encoding = tiktoken.get_encoding(encoding_name)
+#     num_tokens = len(encoding.encode(string))
+#     return num_tokens
 
-counts = [num_tokens_from_string(d, "cl100k_base") for d in docs_texts]
+# counts = [num_tokens_from_string(d, "cl100k_base") for d in docs_texts]
 
-plt.figure(figsize=(10, 6))
-plt.hist(counts, bins=30, color="blue", edgecolor="black", alpha=0.7)
-plt.title("Token Counts in LCEL Documents")
-plt.xlabel("Token Count")
-plt.ylabel("Frequency")
-plt.grid(axis="y", alpha=0.75)
-plt.show
+# fig = plt.figure()
+# fig, ax = plt.subplots()
+# ax.hist(counts, bins=30, color="blue", edgecolor="black", alpha=0.7)
+# ax.set_title("Token Counts in LCEL Documents")
+# ax.set_xlabel("Token Count")
+# ax.set_ylabel("Frequency")
+# ax.grid(axis="y", alpha=0.75)
+# plt.show()
+
+# fig = plt.figure()
+# fig, ax = plt.subplots()
+# ax.scatter(range(len(counts)), counts, color="green", alpha=0.5, s=6)
+# ax.set_title("Token Counts in LCEL Documents")
+# ax.set_xlabel("Document Index")
+# ax.set_ylabel("Token Count")
+# ax.grid(alpha=0.75)
+# plt.show()
+
+# docs[0].__dict__.keys()
+# docs[0].__dict__
 
 # 문서 텍스트를 연결합니다. (출처 메타데이터 기준으로 정렬)
 d_sorted = sorted(docs, key=lambda x: x.metadata["source"])
-d_reversed = list(reversed(d_sorted))  # 정렬된 문서를 역순으로 배열합니다.
-# 역순으로 배열된 문서의 내용을 연결합니다.
+d_reversed = list(reversed(d_sorted))
+# # 역순으로 배열된 문서의 내용을 연결합니다.
 concatenated_content = "\n\n\n --- \n\n\n".join(
     [ doc.page_content for doc in d_reversed]
 )
-print(
-    "Num tokens in all context: %s"  # 모든 문맥에서의 토큰 수를 출력합니다.
-    % num_tokens_from_string(concatenated_content, "cl100k_base")
-)
+# print(
+#     "Num tokens in all context: %s"  # 모든 문맥에서의 토큰 수를 출력합니다.
+#     % num_tokens_from_string(concatenated_content, "cl100k_base")
+# )
 
 # 2 - Split the document into smaller parts ------------------------------------
+# 재귀적 문자 텍스트 분할기를 초기화합니다.
+#  => 토큰 인코더를 사용하여 청크 크기와 중복을 설정합니다.
 chunk_size_tok = 2000
-# 재귀적 문자 텍스트 분할기를 초기화합니다. 토큰 인코더를 사용하여 청크 크기와 중복을 설정합니다.
 text_splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
     chunk_size=chunk_size_tok,
     chunk_overlap=0
@@ -91,29 +116,35 @@ texts_split = text_splitter.split_text(
 # 3 - Store the embeddings -----------------------------------------------------
 
 # embeddings 인스턴스를 생성합니다.
+# from langchain_openai import OpenAIEmbeddings
 # embd = OpenAIEmbeddings(model="text-embedding-3-small", disallowed_special=())
-MODEL="llama3.3:latest"
-BASE_URL="http://172.17.0.2:11434"
+
+MODEL="deepseek-coder-v2"
+BASE_URL="http://172.17.0.2:11434/"
 embd = OllamaEmbeddings(
     model=MODEL,
     base_url=BASE_URL,
 )
+
+# cache_dir = "./cache/"
+# if not os.path.exists(cache_dir):
+#     os.makedirs(cache_dir)
+# store = LocalFileStore(cache_dir)
+
 store = LocalFileStore("./cache/")
+
 cached_embeddings = CacheBackedEmbeddings.from_bytes_store(
     embd,
     store,
-    namespace=embd.model
+    namespace=embd.model  #.replace(":", "_")
 )
+# cached_embeddings.embed_documents(["test text"])
 
 # 모델을 초기화 합니다. --------------------------------------------------
 class StreamCallback(BaseCallbackHandler):
     def on_llm_new_token(self, token: str, **kwargs):
         print(token, end="", flush=True)
 
-# from langchain_anthropic import ChatAnthropic
-# from langchain_openai import OpenAIEmbeddings, ChatOpenAI
-# ChatAnthropic 모델을 초기화합니다. 온도는 0으로 설정하고, 모델은 "claude-3-opus-20240229"를 사용합니다.
-# model = ChatAnthropic(temperature=0, model="claude-3-opus-20240229")
 model = ChatOllama(
     base_url="http://172.17.0.2:11434",
     model = "llama3.3:latest",
@@ -123,15 +154,20 @@ model = ChatOllama(
     # num_predict = 256,
 )
 
-
 from langchain_core.output_parsers import StrOutputParser
 from raptor_.fn_raptor import recursive_embed_cluster_summarize
+
+# import importlib
+# from raptor_ import fn_raptor
+# importlib.reload(fn_raptor.recursive_embed_cluster_summarize)
 
 # 트리 구축 ------------------------------------------------------
 leaf_texts = docs_texts  # 문서 텍스트를 리프 텍스트로 설정
 results = recursive_embed_cluster_summarize(
     leaf_texts, level=1, n_levels=3, model=model
 )  # 재귀적으로 임베딩, 클러스터링 및 요약을 수행하여 결과를 얻음
+
+
 
 from langchain_community.vectorstores import FAISS
 # leaf_texts를 복사하여 all_texts를 초기화합니다.
@@ -148,6 +184,8 @@ for level in sorted(results.keys()):
 vectorstore = FAISS.from_texts(texts=all_texts, embedding=embd)
 
 
+
+
 # DB 를 로컬에 저장합니다.
 DB_INDEX = "v_store"
 
@@ -160,7 +198,6 @@ else:
     vectorstore.save_local(folder_path=DB_INDEX)
 
 retriever = vectorstore.as_retriever()
-logger.info(f"number of docs_texts: {len(docs_texts)}")
 # --------------------------------------------------------------------------
 from langchain import hub
 from langchain_core.runnables import RunnablePassthrough
