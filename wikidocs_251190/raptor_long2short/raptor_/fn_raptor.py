@@ -20,13 +20,13 @@ from sklearn.mixture import GaussianMixture
 from langchain_core.output_parsers import StrOutputParser
 from langchain.prompts import ChatPromptTemplate
 from langchain_community.embeddings import OllamaEmbeddings
-MODEL="llama3.3:latest"
-BASE_URL="http://172.17.0.2:11434"
-embd = OllamaEmbeddings(
-    model=MODEL,
-    base_url=BASE_URL,
-)
+from langchain_community.chat_models import ChatOllama
+from sklearn.cluster import MiniBatchKMeans
 
+embd = OllamaEmbeddings(
+    model='nomic-embed-text:latest',
+    base_url="http://172.17.0.2:11434",
+)
 
 RANDOM_SEED = 42  # 재현성을 위한 고정된 시드 값
 
@@ -105,15 +105,21 @@ def GMM_cluster(embeddings: np.ndarray, threshold: float, random_state: int = 0)
     returns:
     - 클러스터 레이블과 결정된 클러스터 수를 포함하는 튜플.
     """
-    n_clusters = get_optimal_clusters(embeddings)  # 최적의 클러스터 수를 구합니다.
-    # 가우시안 혼합 모델을 초기화합니다.
-    gm = GaussianMixture(n_components=n_clusters, random_state=random_state)
-    gm.fit(embeddings)  # 임베딩에 대해 모델을 학습합니다.
-    probs = gm.predict_proba(
-        embeddings
-    )  # 임베딩이 각 클러스터에 속할 확률을 예측합니다.
-    # 임계값을 초과하는 확률을 가진 클러스터를 레이블로 선택합니다.
-    labels = [np.where(prob > threshold)[0] for prob in probs]
+
+    # n_clusters = get_optimal_clusters(embeddings)  # 최적의 클러스터 수를 구합니다.
+    # # 가우시안 혼합 모델을 초기화합니다.
+    # gm = GaussianMixture(n_components=n_clusters, random_state=random_state)
+    # gm.fit(embeddings)  # 임베딩에 대해 모델을 학습합니다.
+    # probs = gm.predict_proba(
+    #     embeddings
+    # )  # 임베딩이 각 클러스터에 속할 확률을 예측합니다.
+    # # 임계값을 초과하는 확률을 가진 클러스터를 레이블로 선택합니다.
+    # labels = [np.where(prob > threshold)[0] for prob in probs]
+    # MiniBatchKMeans 사용
+    n_clusters = get_optimal_clusters(embeddings)
+    kmeans = MiniBatchKMeans(n_clusters=n_clusters, random_state=random_state)
+    labels = kmeans.fit_predict(embeddings)
+
     return labels, n_clusters  # 레이블과 클러스터 수를 반환합니다.
 
 def perform_clustering(
@@ -148,7 +154,7 @@ def perform_clustering(
     for i in range(n_global_clusters):
         # 현재 글로벌 클러스터에 속하는 임베딩 추출
         global_cluster_embeddings_ = embeddings[
-            np.array([i in gc for gc in global_clusters])
+            np.array([i == gc for gc in global_clusters])  # in ==> ==
         ]
 
         if len(global_cluster_embeddings_) == 0:
@@ -165,11 +171,11 @@ def perform_clustering(
             local_clusters, n_local_clusters = GMM_cluster(
                 reduced_embeddings_local, threshold
             )
-
+        logger.info(f"Global cluster {i} has {n_local_clusters} local clusters {local_clusters}")
         # 로컬 클러스터 ID 할당, 이미 처리된 총 클러스터 수를 조정
         for j in range(n_local_clusters):
             local_cluster_embeddings_ = global_cluster_embeddings_[
-                np.array([j in lc for lc in local_clusters])
+                np.array([j == lc for lc in local_clusters])
             ]
             indices = np.where(
                 (embeddings == local_cluster_embeddings_[:, None]).all(-1)
@@ -191,13 +197,14 @@ def embed(texts):
     # returns:
     # - numpy.ndarray: 주어진 텍스트 문서들에 대한 임베딩 배열입니다.
     logger.info("Embedding texts...===> start")
-    # text_embeddings = embd.embed_documents(texts) # 텍스트 문서들의 임베딩을 생성합니다.
+    text_embeddings = embd.embed_documents(texts) # 텍스트 문서들의 임베딩을 생성합니다.
 
-    path = "/workspaces/wikidocs_251190/raptor_long2short/temp/text_embeddings.pkl"
+    #path = "/workspaces/wikidocs_251190/raptor_long2short/temp/text_embeddings.pkl"
+
     # with open(path, 'wb') as file:
     #     pickle.dump(text_embeddings, file)
-    with open(path, 'rb') as file:
-        text_embeddings = pickle.load(file)
+    # with open(path, 'rb') as file:
+    #     text_embeddings = pickle.load(file)
 
     logger.info("Embedding texts...<=== end")
 
@@ -256,6 +263,15 @@ def embed_cluster_summarize_texts(
       1. 첫 번째 데이터프레임(`df_clusters`)은 원본 텍스트, 그들의 임베딩, 그리고 클러스터 할당을 포함합니다.
       2. 두 번째 데이터프레임(`df_summary`)은 각 클러스터에 대한 요약, 지정된 세부 수준, 그리고 클러스터 식별자를 포함합니다.
     """
+    # 기본 모델 설정 (필요한 경우)
+    if model is None:
+        logger.info("====> Model is not provided, using default model")
+        model = ChatOllama(
+            base_url="http://172.17.0.2:11434",
+            model="llama3.3:latest",
+            temperature=0,
+            streaming=True,
+        )
     # 텍스트를 임베딩하고 클러스터링하여 'text', 'embd', 'cluster' 열이 있는 데이터프레임을 생성합니다.
     df_clusters = embed_cluster_texts(texts)
 
@@ -282,6 +298,8 @@ def embed_cluster_summarize_texts(
     # LangChain 표현 언어는 LangChain에서 체인을 구성하는 방법을 제공합니다.
     # 제공된 문서의 자세한 요약을 제공하십시오.
     template ="""
+    여기 shiny for python 문서의 하위 집합이 있습니다.
+    이 문서의 핵심 주제와 주요 포인트를 요약해 주세요:
     문서:
     {context}
     """
@@ -295,6 +313,7 @@ def embed_cluster_summarize_texts(
         formatted_txt = fmt_txt(df_cluster)
         summary = chain.invoke({"context": formatted_txt})
         summaries.append(summary)
+
     # 요약, 해당 클러스터 및 레벨을 저장할 데이터프레임을 생성합니다.
     df_summary = pd.DataFrame(
         {
@@ -305,6 +324,7 @@ def embed_cluster_summarize_texts(
     )
 
     return df_clusters, df_summary
+
 
 def recursive_embed_cluster_summarize(
     texts: List[str], level: int = 1, n_levels: int = 3, model=None

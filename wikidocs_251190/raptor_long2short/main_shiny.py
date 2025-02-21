@@ -11,7 +11,8 @@ import matplotlib.pyplot as plt
 
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain.storage import LocalFileStore
-from langchain_community.embeddings import OllamaEmbeddings
+#from langchain_community.embeddings import OllamaEmbeddings
+from langchain_ollama import OllamaEmbeddings
 from langchain.embeddings import CacheBackedEmbeddings
 
 from langchain.callbacks.base import BaseCallbackHandler
@@ -119,11 +120,9 @@ texts_split = text_splitter.split_text(
 # from langchain_openai import OpenAIEmbeddings
 # embd = OpenAIEmbeddings(model="text-embedding-3-small", disallowed_special=())
 
-MODEL="deepseek-coder-v2"
-BASE_URL="http://172.17.0.2:11434/"
 embd = OllamaEmbeddings(
-    model=MODEL,
-    base_url=BASE_URL,
+    model="all-minilm:l6-v2", # 더 가벼운 모델로 교체
+    base_url="http://172.17.0.2:11434/"
 )
 
 # cache_dir = "./cache/"
@@ -150,7 +149,7 @@ model = ChatOllama(
     model = "llama3.3:latest",
     temperature = 0,
     streaming=True,
-    callbacks=[StreamCallback()],
+    #callbacks=[StreamCallback()],
     # num_predict = 256,
 )
 
@@ -189,14 +188,14 @@ vectorstore = FAISS.from_texts(texts=all_texts, embedding=embd)
 # DB 를 로컬에 저장합니다.
 DB_INDEX = "v_store"
 
+
 # 로컬에 FAISS DB 인덱스가 이미 존재하는지 확인하고, 그렇다면 로드하여 vectorstore와 병합한 후 저장합니다.
 if os.path.exists(DB_INDEX):
-    local_index = FAISS.load_local(DB_INDEX, embd)
+    local_index = FAISS.load_local(DB_INDEX, embd, allow_dangerous_deserialization=True)
     local_index.merge_from(vectorstore)
     local_index.save_local(DB_INDEX)
 else:
     vectorstore.save_local(folder_path=DB_INDEX)
-
 retriever = vectorstore.as_retriever()
 # --------------------------------------------------------------------------
 from langchain import hub
@@ -207,7 +206,6 @@ prompt = hub.pull("rlm/rag-prompt")
 def format_docs(docs):
     # 문서의 페이지 내용을 이어붙여 반환합니다.
     return "\n\n".join(doc.page_content for doc in docs)
-
 # RAG 체인 정의
 rag_chain = (
     # 검색 결과를 포맷팅하고 질문을 처리합니다.
@@ -218,8 +216,13 @@ rag_chain = (
 )
 
 # 추상적인 질문 실행
-_ = rag_chain.invoke("전체 문서의 핵심 주제에 대해 설명해주세요.")
+_ = rag_chain.invoke("shiny를 기준으로 전체 문서의 핵심 주제에 대해 설명해주세요.")
+print(_)
 # Low Level 질문 실행
-_ = rag_chain.invoke("Restaurant tips dashboard을 활용한 예시 코드를 작성해 주세요.")
+_ = rag_chain.invoke("shiny for python을 사용하여 Restaurant tips dashboard을 활용한 예시 코드를 작성해 주세요.")
+print(_)
 # Low Level 질문 실행
-_ = rag_chain.invoke("reactive 방법과 예시 코드를 작성해 주세요.")
+_ = rag_chain.invoke("shiny에서 사용하는 reactive 방법과 예시 코드를 작성해 주세요.")
+print(_)
+
+logger.info("RAG Chain Test Completed")

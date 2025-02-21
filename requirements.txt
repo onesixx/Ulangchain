@@ -16,3 +16,4 @@ matplotlib
 langchain_anthropic
 umap-learn
 scikit-learn
+transformers
