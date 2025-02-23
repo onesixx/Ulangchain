@@ -18,6 +18,7 @@ import os
 import streamlit as st
 import tempfile
 
+
 V_STORE_PATH = "./v_store"
 
 def pdf_to_document(uploaded_file):
@@ -59,24 +60,31 @@ if uploaded_file is not None:
     db = Chroma.from_documents(texts, embedding_model, persist_directory=V_STORE_PATH)
     st.write("File uploaded and store chroma successfully!")
 
-    ###### Retreve (QUERY) ------------------------------------------------------------------
-    st.header("Ask your PDF")
-    question = st.text_input("Enter your question here")
 
-    if st.button('Ask'):
-        with st.spinner("Thinking..."):
-            qa_chain = RetrievalQA.from_chain_type(
-                retriever = db.as_retriever(),
-                llm = ChatOllama(
-                        base_url="http://172.17.0.2:11434",
-                        model = "llama3.3:latest",
-                        temperature = 0,
-                        num_predict = 256,
-                    )
-            )
-            # 질문에 대한 답변 출력하기
-            answer = qa_chain.invoke({"query": question})
-            print(answer)
-            st.write(answer['result'])
+###### Retreve (QUERY) ------------------------------------------------------------------
+st.header("Ask your PDF")
+question = st.text_input("Enter your question here")
+
+try:
+    db = Client()
+    db.load_from_directory(V_STORE_PATH)
+except Exception as e:
+    print(f"Error loading Chroma DB from directory: {e}")
+
+if st.button('Ask'):
+    with st.spinner("Thinking..."):
+        qa_chain = RetrievalQA.from_chain_type(
+            retriever = db.as_retriever(),
+            llm = ChatOllama(
+                    base_url="http://172.17.0.2:11434",
+                    model = "llama3.3:latest",
+                    temperature = 0,
+                    num_predict = 256,
+                )
+        )
+        # 질문에 대한 답변 출력하기
+        answer = qa_chain.invoke({"query": question})
+        print(answer)
+        st.write(answer['result'])
 
 
