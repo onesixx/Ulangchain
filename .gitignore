@@ -1,3 +1,4 @@
+streamlit_agent/runs/*
 *.bin
 # Byte-compiled / optimized / DLL files
 __pycache__/
