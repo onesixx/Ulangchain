@@ -19,74 +19,85 @@ import os
 import streamlit as st
 import tempfile
 
-# def pdf_to_document(uploaded_file):
-#     temp_dir = tempfile.TemporaryDirectory()
-#     temp_filepath = os.path.join(temp_dir.name, uploaded_file.name)
-#     with open(temp_filepath, "wb") as f:
-#         f.write(uploaded_file.getvalue())
-#     # ------ Load ------
-#     loader = PyPDFLoader(temp_filepath)
-#     pages = loader.load_and_split()
-#     return pages
+from langchain_chroma import Chroma
+from langchain_community.embeddings import HuggingFaceEmbeddings
+
+model_name = "nlpai-lab/KoE5"
+# Initialize embedding_model based on model_name using if-else
+if model_name == "nomic-embed-text:latest":
+    embedding_model = OllamaEmbeddings(
+        base_url="http://172.17.0.2:11434",
+        model=model_name
+    )
+elif model_name == "all-minilm:l6-v2":
+    embedding_model = OllamaEmbeddings(
+        base_url="http://172.17.0.2:11434",
+        model=model_name
+    )
+elif model_name == "nlpai-lab/KoE5":
+    embedding_model = HuggingFaceEmbeddings(
+        model_name=model_name
+    )
+else:
+    raise ValueError(f"Unsupported model_name: {model_name}. Supported models are: ['nomic-embed-text:latest', 'all-minilm:l6-v2', 'jhgan/ko-sroberta-multitask']")
+dimension_size = len(embedding_model.embed_query("hello world"))
+
+
 
 # ------ Load ------
 loader = PyPDFLoader(r"./data/aLuckyDay.pdf")
 pages = loader.load_and_split()
 
-print(pages[5].metadata)
-print("===============================")
-print(pages[5].page_content)
-
-
 # tokenizer
-import tiktoken
-tokenizer = tiktoken.get_encoding("cl100k_base")
-def tiktoken_len(text):
-    tokens = tokenizer.encode(text)
-    return len(tokens)
+# import tiktoken
+# tokenizer = tiktoken.get_encoding("cl100k_base")
+# def tiktoken_len(text):
+#     tokens = tokenizer.encode(text)
+#     return len(tokens)
 
+
+# text_splitter = RecursiveCharacterTextSplitter(
+#     separators=["\n\n", "\n", " ", "", "."],
+#     chunk_size=300,
+#     chunk_overlap=20,
+#     length_function=len, #tiktoken_len,
+#     is_separator_regex=False,
+# )
 
 from langchain_experimental.text_splitter import SemanticChunker
-text_splitter = RecursiveCharacterTextSplitter(
-    separators=["\n\n", "\n", " ", "", "."],
-    chunk_size=300,
-    chunk_overlap=20,
-    length_function=len, #tiktoken_len,
-    is_separator_regex=False,
-)
 text_splitter = SemanticChunker(
     OllamaEmbeddings(
         base_url="http://172.17.0.2:11434",
-        # model= "all-minilm:l6-v2",
-        model= "llama3.3:latest",
+        model= model_name #"llama3.3:latest",
     )
 )
 
-txts = text_splitter.split_documents(pages)
-print( [len(txt.page_content) for txt in txts] )
+docs = text_splitter.split_documents(pages)
+print( [len(txt.page_content) for txt in docs] )
 
-txts[7].page_content
-txts[8].page_content
+docs[0].page_content
+docs[8].page_content
+
+# ----------------------------------------------------------
 
 # toke
-V_STORE_PATH = "./v_store"
-embedding_model = OllamaEmbeddings(
-    base_url="http://172.17.0.2:11434",
-    model= "all-minilm:l6-v2", # "llama3.3:latest",
-)
-dimension_size = len(embedding_model.embed_query("hello world"))
-# dimension_size = 8192 # 384
+#  V_STORE_PATH = "./v_store"
+Chroma().delete_collection()
+db = Chroma.from_documents(docs, embedding_model,
+        persist_directory="./chroma_db")
 
+
+#
+
+
+
+#------------------------------------------------------------
 llm = ChatOllama(
     base_url="http://172.17.0.2:11434",
     model = "llama3.3:latest",
     temperature = 0.1,
     num_predict = 256,
 )
-
-st.title("ChatPDF with Ollama")
-st.write("---")
-st.write("Upload a PDF file to start chatting with it!")
 
 if os.path.exists("v_store/index.faiss"):
     st.write("Vector store is already loaded.")
