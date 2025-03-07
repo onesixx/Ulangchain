@@ -11,6 +11,7 @@ from pathlib import Path
 from rosie.config import BASE_DIR
 
 # Use my own logger , not the root logger
+# and one logger per module
 logger = logging.getLogger("sixx_logger")
 
 def setup_logging(log_filename: str = 'app.log'):

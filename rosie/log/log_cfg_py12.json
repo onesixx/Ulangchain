@@ -3,8 +3,13 @@
     "disable_existing_loggers": false,
     "filters": {},
     "formatters": {
-        "simple": {
+        "debug_format": {
             "format": "=>| %(levelname)s | %(pathname)s:%(lineno)d | %(asctime)s |\n=>| %(message)s  ",
+            "datefmt": "%Y-%m-%d %H:%M:%S",
+            "class": "rosie.log.log_color.ColoredFormatter"
+        },
+        "simple": {
+            "format": "[%(levelname)s] | %(pathname)s:%(lineno)d | \n=>| %(asctime)s | %(message)s  ",
             "datefmt": "%Y-%m-%d %H:%M:%S",
             "class": "rosie.log.log_color.ColoredFormatter"
         },
@@ -14,6 +19,12 @@
         }
     },
     "handlers": {
+        "debug_handler": {
+            "class": "logging.StreamHandler",
+            "level": "DEBUG",
+            "formatter": "debug_format",
+            "stream": "ext://sys.stdout"
+        },
         "stdout": {
             "class": "logging.StreamHandler",
             "level": "INFO",

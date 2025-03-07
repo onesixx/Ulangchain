@@ -1,8 +1,8 @@
 from rosie.log import setup_logging
 setup_logging('app_all.log')
 
-from rosie.log import logger
-logger.info("Let's go, rosie!!")
+# from rosie.log import logger
+# logger.info("Let's go, rosie!!")
 
 from .config import (
     HOME_DIR,
