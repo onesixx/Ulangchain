@@ -1,10 +1,8 @@
+#!/usr/bin/env python
+# -*- coding: utf8 -*-
 """
 This module contains utility functions that are used in the rosie_template app.
 """
-
-#!/usr/bin/env python
-# -*- coding: utf8 -*-
-
 from pathlib import Path
 from datetime import datetime, timedelta
 import warnings
@@ -53,9 +51,6 @@ def tooltip_style(hover_info:json, offset_left:int=0, offset_top:int=0 ) -> str:
         font-size: small;
     """
     return style
-
-
-
 
 def conv_hms(miliseconds):
     #miliseconds = 19036

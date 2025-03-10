@@ -4,8 +4,8 @@
     "filters": {},
     "formatters": {
         "simple": {
-            "format": "=>| %(levelname)s | %(pathname)s:%(lineno)d | %(asctime)s |\n=>| %(message)s  ",
-            "datefmt": "%Y-%m-%d %H:%M:%S",
+            "format": "[%(levelname)s] %(asctime)s | %(pathname)s:%(lineno)d | \n=> | %(message)s  ",
+            "datefmt": "%m-%d %H:%M:%S",
             "class": "rosie.log.log_color.ColoredFormatter2"
         },
         "verbose": {
@@ -16,7 +16,7 @@
     "handlers": {
         "stdout": {
             "class": "logging.StreamHandler",
-            "level": "INFO",
+            "level": "DEBUG",
             "formatter": "simple",
             "stream": "ext://sys.stdout"
         },
@@ -27,14 +27,24 @@
             "maxBytes": 10240,
             "backupCount": 16,
             "encoding": "utf8"
+        },
+        "queue_handler": {
+            "class": "logging.handlers.QueueHandler",
+            "level": "DEBUG",
+            "handlers": [
+                "stdout",
+                "file"
+            ],
+            "respect_handler_level": true
         }
     },
     "loggers": {
         "root": {
             "level": "DEBUG",
             "handlers": [
+                "file",
                 "stdout",
-                "file"
+                "queue_handler"
             ]
         }
     }

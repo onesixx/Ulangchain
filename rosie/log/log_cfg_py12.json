@@ -3,31 +3,40 @@
     "disable_existing_loggers": false,
     "filters": {},
     "formatters": {
-        "debug_format": {
-            "format": "=>| %(levelname)s | %(pathname)s:%(lineno)d | %(asctime)s |\n=>| %(message)s  ",
-            "datefmt": "%Y-%m-%d %H:%M:%S",
+        "simple": {
+            "format": "[%(levelname)s] | %(pathname)s:%(lineno)d | \n=> | %(message)s  ",
+            "datefmt": "%yY-%m-%d %H:%M:%S",
             "class": "rosie.log.log_color.ColoredFormatter"
         },
-        "simple": {
-            "format": "[%(levelname)s] | %(pathname)s:%(lineno)d | \n=>| %(asctime)s | %(message)s  ",
-            "datefmt": "%Y-%m-%d %H:%M:%S",
-            "class": "rosie.log.log_color.ColoredFormatter"
+        "detail": {
+            "format": "[%(levelname)s] %(asctime)s | %(pathname)s:%(lineno)d | \n=> | %(message)s  ",
+            "datefmt": "%m-%d %H:%M:%S",
+            "class": "rosie.log.log_color.ColoredFormatter2"
         },
         "verbose": {
             "format": "[%(asctime)s | %(levelname)s | %(module)s | %(filename)s:%(lineno)d ] %(message)s",
-            "datefmt": "%Y-%m-%dT%H:%M:%S%z"
+            "datefmt": "%Y-%m-%dT%H:%M:%S%z",
+            "class": "rosie.log.log_color.ColoredFormatter2"
         }
     },
     "handlers": {
+        "info_handler": {
+            "class": "logging.StreamHandler",
+            "level": "INFO",
+            "formatter": "simple",
+            "stream": "ext://sys.stdout",
+            "filters": ["info_filter"]
+        },
         "debug_handler": {
             "class": "logging.StreamHandler",
             "level": "DEBUG",
-            "formatter": "debug_format",
-            "stream": "ext://sys.stdout"
+            "formatter": "detail",
+            "stream": "ext://sys.stdout",
+            "filters": ["debug_filter"]
         },
-        "stdout": {
+        "error_handler": {
             "class": "logging.StreamHandler",
-            "level": "INFO",
+            "level": "WARNING",
             "formatter": "simple",
             "stream": "ext://sys.stdout"
         },
@@ -41,8 +50,10 @@
         },
         "queue_handler": {
             "class": "logging.handlers.QueueHandler",
+            "level": "DEBUG",
             "handlers": [
-                "stdout",
+                "info_handler",
+                "debug_handler",
                 "file"
             ],
             "respect_handler_level": true
@@ -52,6 +63,9 @@
         "root": {
             "level": "DEBUG",
             "handlers": [
+                "info_handler",
+                "debug_handler",
+                "error_handler",
                 "queue_handler"
             ]
         }

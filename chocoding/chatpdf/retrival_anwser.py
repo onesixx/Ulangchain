@@ -1,6 +1,6 @@
-from rosie.log import setup_logging
-from rosie.log import logger
-logger.info("Here we go!!! vvvvvvvvvvvvvvvvvvvvvvvv")
+# from rosie.log import setup_logging
+from rosie.log import mylogger
+mylogger.info("Here we go!!! vvvvvvvvvvvvvvvvvvvvvvvv")
 
 from util import *
 from langchain_chroma import Chroma
@@ -12,7 +12,7 @@ import os
 import streamlit as st
 import tempfile
 # Define the model name you want to use
-logger.debug("Starting the script...")
+mylogger.debug("Starting the script...")
 
 embedding_model = load_LLM_embeddings("nomic-embed-text:latest")
 db = Chroma(persist_directory="./chroma_db",
