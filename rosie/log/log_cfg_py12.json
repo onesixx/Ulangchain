@@ -25,14 +25,14 @@
             "level": "INFO",
             "formatter": "simple",
             "stream": "ext://sys.stdout",
-            "filters": ["info_filter"]
+            "filters": ["infofilter"]
         },
         "debug_handler": {
             "class": "logging.StreamHandler",
             "level": "DEBUG",
             "formatter": "detail",
             "stream": "ext://sys.stdout",
-            "filters": ["debug_filter"]
+            "filters": ["debugfilter"]
         },
         "error_handler": {
             "class": "logging.StreamHandler",

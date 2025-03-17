@@ -1,6 +1,6 @@
 torch
 langchain_teddynote
-"protobuf>=5.0,<6.0"
+protobuf>=5.0,<6.0
 pymupdf
 langchain
 langchain_community

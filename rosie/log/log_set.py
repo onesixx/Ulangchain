@@ -34,7 +34,7 @@ def setup_logging(log_filename: str = 'app.log'):
     config["handlers"]["file"]["filename"] = log_file
 
     # 필터 추가
-    config['filters']['info_filter']  = {'()': 'rosie.log.log_filter.InfoFilter'}
-    config['filters']['debug_filter'] = {'()': 'rosie.log.log_filter.DebugFilter'}
+    config['filters']['debugfilter']  = {'()': 'rosie.log.log_filter.DebugFilter'}
+    config['filters']['infofilter'] = {'()': 'rosie.log.log_filter.InfoFilter'}
 
     logging.config.dictConfig(config)
